@@ -20,8 +20,16 @@ const generateTrackingId = () => {
 };
 
 // firebase middleware initialization
-var admin = require("firebase-admin");
-var serviceAccount = require("./everfast-express-firebase-adminsdk.json");
+
+// comment while deploying
+// var admin = require("firebase-admin");
+// var serviceAccount = require("./everfast-express-firebase-adminsdk.json");
+// replace this
+const decoded = Buffer.from(process.env.FB_SERVICE_KEY, "base64").toString(
+  "utf8",
+);
+const serviceAccount = JSON.parse(decoded);
+
 const { format } = require("path");
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -698,10 +706,12 @@ async function run() {
     });
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!",
-    );
+
+    // comment it while deploying to server
+    // await client.db("admin").command({ ping: 1 });
+    // console.log(
+    //   "Pinged your deployment. You successfully connected to MongoDB!",
+    // );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
