@@ -22,6 +22,7 @@ const generateTrackingId = () => {
 // firebase middleware initialization
 var admin = require("firebase-admin");
 var serviceAccount = require("./everfast-express-firebase-adminsdk.json");
+const { format } = require("path");
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
@@ -594,7 +595,9 @@ async function run() {
       const pipeLine = [
         {
           $group: {
+            // Group all documents by deliveryStatus like delivered ,deliverd are 1 group, pending-pickup, pending-pickup are 1 group, rider-accepted are 1 group etc.
             _id: "$deliveryStatus",
+            // Count total documents in each group ($sum: 1 means add 1 common document for every group document)
             count: { $sum: 1 },
           },
         },
@@ -603,6 +606,7 @@ async function run() {
           $project: {
             status: "$_id",
             count: 1,
+            // Uncomment if you don't want _id in response
             // _id: 0
           },
         },
@@ -611,6 +615,85 @@ async function run() {
         },
       ];
       const result = await parcelCollections.aggregate(pipeLine).toArray();
+      res.send(result);
+    });
+
+    // Find how many parcels a rider delivered each day
+    app.get("/parcels/stats/delivery-per-day", async (req, res) => {
+      const { rideruid } = req.query;
+      const pipeline = [
+        {
+          // Here $match Works like SQL
+          // SELECT * FROM parcels
+          // WHERE rideruid='abc'
+          // AND deliveryStatus='delivered'
+          $match: {
+            rideruid: rideruid,
+            deliveryStatus: "delivered",
+          },
+        },
+        {
+          // Join trackings collection
+          //
+          // parcels:
+          // {
+          //   trackingId: "TRK001"
+          // }
+          //
+          // trackings:
+          // {
+          //   trackingId: "TRK001",
+          //   status: "delivered"
+          // }
+          //
+          // Result:
+          // {
+          //   trackingId: "TRK001",
+          //   parcel_trackings: [
+          //      { status: "picked_up" },
+          //      { status: "delivered" }
+          //   ]
+          // }
+          //
+          $lookup: {
+            from: "trackings",
+            localField: "trackingId",
+            foreignField: "trackingId",
+            as: "parcel_trackings",
+          },
+        },
+        {
+          // Break parcel_trackings array into separate documents
+          $unwind: "$parcel_trackings",
+        },
+        {
+          // Keep only delivered tracking record
+          $match: {
+            "parcel_trackings.status": "delivered",
+          },
+        },
+        {
+          $addFields: {
+            // Create a new field called deliveryDay
+            deliveryDay: {
+              $dateToString: {
+                format: "%Y-%m-%d",
+                date: "$parcel_trackings.createdAt",
+              },
+            },
+          },
+        },
+        {
+          $group: {
+            // Group by delivery day
+            _id: "$deliveryDay",
+            // Count deliveries for that date
+            count: { $sum: 1 },
+          },
+        },
+      ];
+
+      const result = await parcelCollections.aggregate(pipeline).toArray();
       res.send(result);
     });
 
