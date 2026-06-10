@@ -22,7 +22,7 @@ const generateTrackingId = () => {
 // firebase middleware initialization
 
 // comment while deploying
-// var admin = require("firebase-admin");
+var admin = require("firebase-admin");
 // var serviceAccount = require("./everfast-express-firebase-adminsdk.json");
 // replace this
 const decoded = Buffer.from(process.env.FB_SERVICE_KEY, "base64").toString(
