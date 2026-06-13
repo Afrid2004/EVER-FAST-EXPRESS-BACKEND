@@ -22,9 +22,9 @@ const generateTrackingId = () => {
 // firebase middleware initialization
 
 // comment while deploying
-var admin = require("firebase-admin");
 // var serviceAccount = require("./everfast-express-firebase-adminsdk.json");
 // replace this
+var admin = require("firebase-admin");
 const decoded = Buffer.from(process.env.FB_SERVICE_KEY, "base64").toString(
   "utf8",
 );
@@ -203,6 +203,23 @@ async function run() {
         res.send(result);
       },
     );
+
+    //update user name email and profile
+    app.patch("/users/:uid/info", verifyFBtoken, async (req, res) => {
+      const { uid } = req.params;
+      const { displayName, email, photoURL } = req.body;
+      const query = { uid: uid };
+      const updatedDoc = {
+        $set: {
+          displayName: displayName,
+          email: email,
+          photoURL: photoURL,
+        },
+      };
+
+      const result = await userCollections.updateOne(query, updatedDoc);
+      res.send(result);
+    });
 
     //role api to prevent all user from accessing admin route
     // (/role used for to get only user role from user object)
