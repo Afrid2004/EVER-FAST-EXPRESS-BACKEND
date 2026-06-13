@@ -222,11 +222,25 @@ async function run() {
       res.send(result);
     });
 
-    //toggle theme api
+    //get the theme api
     app.get("/users/:uid/theme", async (req, res) => {
       const { uid } = req.params;
       const query = { uid: uid };
       const result = await userCollections.findOne(query);
+      res.send(result);
+    });
+
+    //toggle theme api
+    app.patch("/users/:uid/theme", async (req, res) => {
+      const { uid } = req.params;
+      const { theme } = req.body;
+      const query = { uid: uid };
+      const updatedDoc = {
+        $set: {
+          theme: theme,
+        },
+      };
+      const result = await userCollections.updateOne(query, updatedDoc);
       res.send(result);
     });
 
