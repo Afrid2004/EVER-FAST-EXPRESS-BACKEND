@@ -137,6 +137,7 @@ async function run() {
       // update user
       user.role = "user";
       user.isAdmin = false;
+      user.theme = "light";
       user.createdAt = new Date();
       const query = { uid: user.uid };
       const isExist = await userCollections.findOne(query);
@@ -219,6 +220,14 @@ async function run() {
 
       const result = await userCollections.updateOne(query, updatedDoc);
       res.send(result);
+    });
+
+    //toggle theme api
+    app.get("/users/:uid/theme", verifyFBtoken, async (req, res) => {
+      const { uid } = req.params;
+      const query = { uid: uid };
+      const result = await userCollections.findOne(query);
+      return result;
     });
 
     //role api to prevent all user from accessing admin route
