@@ -223,11 +223,11 @@ async function run() {
     });
 
     //toggle theme api
-    app.get("/users/:uid/theme", verifyFBtoken, async (req, res) => {
+    app.get("/users/:uid/theme", async (req, res) => {
       const { uid } = req.params;
       const query = { uid: uid };
       const result = await userCollections.findOne(query);
-      return result;
+      res.send(result);
     });
 
     //role api to prevent all user from accessing admin route
