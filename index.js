@@ -240,7 +240,9 @@ async function run() {
           theme: theme,
         },
       };
-      const result = await userCollections.updateOne(query, updatedDoc);
+      const result = await userCollections.updateOne(query, updatedDoc, {
+        upsert: true,
+      });
       res.send(result);
     });
 
